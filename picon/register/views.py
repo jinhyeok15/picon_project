@@ -14,11 +14,11 @@ from .serializers import *
 # Create your views here.
 
 
-class AccountList(generics.ListCreateAPIView):
+class AccountList(generics.ListCreateAPIView): # 계정 생성 및 조회 API
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
 
-class AccountDetail(generics.RetrieveUpdateDestroyAPIView):
+class AccountDetail(generics.RetrieveUpdateDestroyAPIView): # 계정 정보 조회 API
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
 
