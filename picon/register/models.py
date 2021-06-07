@@ -14,10 +14,13 @@ class Account(models.Model):
 
 
 class Follow(models.Model):
-    from_follow = models.OneToOneField(Account, related_name='from_follow', on_delete=models.CASCADE, primary_key=True)
-    to_follow = models.ManyToManyField(Account, related_name='to_follow')
+    from_follow = models.ForeignKey('Account', related_name='user_id', on_delete=models.CASCADE)
+    to_follow = models.ForeignKey('Account', related_name='follow_id', on_delete=models.CASCADE)
     status = models.SmallIntegerField(default=1)
     modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'follow'
+        constraints = [
+            models.UniqueConstraint(fields=['from_follow', 'to_follow'], name='unique_relation')
+        ]

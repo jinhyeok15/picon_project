@@ -26,17 +26,17 @@ class Migration(migrations.Migration):
                 'ordering': ['created'],
             },
         ),
-        migrations.CreateModel(
-            name='Follow',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.SmallIntegerField(default=1)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('from_follow', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='from_follow', to='register.account')),
-                ('to_follow', models.ManyToManyField(related_name='to_follow', to='register.Account')),
-            ],
-            options={
-                'db_table': 'follow',
-            },
-        ),
+        # migrations.CreateModel(
+        #     name='Follow',
+        #     fields=[
+        #         ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+        #         ('status', models.SmallIntegerField(default=1)),
+        #         ('modified', models.DateTimeField(auto_now=True)),
+        #         ('from_follow', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='from_follow', to='register.account')),
+        #         ('to_follow', models.ManyToManyField(related_name='to_follow', to='register.Account')),
+        #     ],
+        #     options={
+        #         'db_table': 'follow',
+        #     },
+        # ),
     ]
