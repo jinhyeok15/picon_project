@@ -22,35 +22,45 @@ class AccountDetail(generics.RetrieveUpdateDestroyAPIView): # 계정 정보 조�
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
 
-class FollowLog(generics.ListCreateAPIView):
-    queryset = Follow.objects.all()
-    serializer_class = FollowSerializer
+class FollowLog(APIView):
+    def get(self, request):
+        queryset = Follow.objects.all()
+        serializer = FollowSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class FollowInfo(APIView):
-    def get_object(self, request, get=False):
+    def get_object(self, request, get=False, create=False):
         if get is False:
             from_ = request.data['from_follow']
             to_ = request.data['to_follow']
         else:
             from_ = request.GET['from_follow']
             to_ = request.GET['to_follow']
+
         try:
-            return Follow.objects.get(from_follow=from_, to_follow=to_)
+            if create is False:
+                return Follow.objects.get(from_follow=from_, to_follow=to_)
+            else:
+                from_account = Account.objects.get(id=from_)
+                to_account = Account.objects.get(id=to_)
+                return Follow.objects.update_or_create(from_follow=from_account, to_follow=to_account)
         except Follow.DoesNotExist:
             raise Http404
+
+    def post(self, request):
+        obj, created = self.get_object(request, create=True)
+        serializer = FollowSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        if created:
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.data, status.HTTP_200_OK)
 
     def get(self, request):
         queryset = self.get_object(request, get=True)
         serializer = FollowSerializer(queryset)
         return Response(serializer.data)
-
-    def put(self, request, format=None):
-        queryset = self.get_object(request)
-        serializer = FollowSerializer(queryset, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FollowList(APIView):
