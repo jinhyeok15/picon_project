@@ -9,7 +9,9 @@ from rest_framework.views import APIView
 
 from .models import *
 from .serializers import *
+from .querysets import *
 
+import re
 
 # Create your views here.
 
@@ -29,26 +31,8 @@ class FollowLog(APIView):
         return Response(serializer.data)
 
 class FollowInfo(APIView):
-    def get_object(self, request, get=False, create=False):
-        if get is False:
-            from_ = request.data['from_follow']
-            to_ = request.data['to_follow']
-        else:
-            from_ = request.GET['from_follow']
-            to_ = request.GET['to_follow']
-
-        try:
-            if create is False:
-                return Follow.objects.get(from_follow=from_, to_follow=to_)
-            else:
-                from_account = Account.objects.get(id=from_)
-                to_account = Account.objects.get(id=to_)
-                return Follow.objects.update_or_create(from_follow=from_account, to_follow=to_account)
-        except Follow.DoesNotExist:
-            raise Http404
-
     def post(self, request):
-        obj, created = self.get_object(request, create=True)
+        obj, created = Object.follow_info(request, create=True)
         serializer = FollowSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -64,18 +48,22 @@ class FollowInfo(APIView):
 
 
 class FollowList(APIView):
-    def follow_list(self, pk):
-        serializer = FollowSerializer(Follow.objects.filter(from_follow=pk, status=1), many=True)
-        l = []
-        serializer_data = serializer.data
-        for d in serializer_data:
-            l.append(d['to_follow'])
-
-        data = []
-        for i in l:
-            data.append(AccountSerializer(Account.objects.filter(id=i), many=True).data[0])
-        return data
-
     def get(self, request, pk, format=None):
-        return Response(self.follow_list(pk))
+        data = Data.follow_list(pk)
+        return Response(data)
 
+class UserSearch(APIView):
+    def get(self, request):
+        nick_name = request.GET['nick_name']
+        regex = rf'{nick_name}'
+        queryset = Account.objects.filter(nick_name__iregex=regex)
+        serializer = AccountSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+class FollowSearch(APIView):
+    def get(self, request, pk):
+        nick_name = request.GET['nick_name']
+        regex = rf'{nick_name}'
+        search = Account.objects.filter(nick_name__iregex=regex)
+        data = Data.follow_search(pk, search)
+        return Response(data)
