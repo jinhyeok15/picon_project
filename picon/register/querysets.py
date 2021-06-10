@@ -1,5 +1,5 @@
 from .models import *
-from .serializers import *
+from . import serializers
 
 # from django.shortcuts import render
 from django.http import Http404
@@ -8,16 +8,30 @@ from rest_framework.response import Response
 
 
 class List:
+
     @classmethod
     def follow_list(cls, pk):
-        serializer = FollowSerializer(Follow.objects.filter(from_follow=pk, status=1), many=True)
+        instance = Follow.objects.filter(from_follow=pk, status=1)
+        serializer = serializers.FollowSerializer(instance, many=True)
         li = []
         serializer_data = serializer.data
         for d in serializer_data:
             li.append(d['to_follow'])
         return li
 
+    @classmethod
+    def user_list(cls):
+        instance = Account.objects.all()
+        serializer = serializers.UserSerializer(instance, many=True)
+        serializer_data = serializer.data
+        li = []
+        for d in serializer_data:
+            li.append(d['id'])
+        return li
+
+
 class Object:
+
     @classmethod
     def follow_info(cls, request, get=False, create=False):
         if get is False:
@@ -37,13 +51,16 @@ class Object:
         except Follow.DoesNotExist:
             raise Http404
 
+
 class Data:
+
     @classmethod
     def follow_list(cls, pk):
         li = List.follow_list(pk)
         data = []
         for i in li:
-            data.append(AccountSerializer(Account.objects.filter(id=i), many=True).data[0])
+            serializer = serializers.AccountSerializer(Account.objects.filter(id=i), many=True)
+            data.append(serializer.data[0])
         return data
 
     @classmethod
@@ -51,7 +68,7 @@ class Data:
         li = List.follow_list(pk)
         data = []
         for i in li:
-            serializer_data = AccountSerializer(obj.filter(id=i), many=True).data
+            serializer_data = serializers.AccountSerializer(obj.filter(id=i), many=True).data
             if not serializer_data:
                 continue
             data.append(serializer_data[0])

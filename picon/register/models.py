@@ -2,6 +2,7 @@ from django.db import models
 
 # Create your models here.
 
+
 class Account(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     nick_name = models.CharField(max_length=32, unique=True)
