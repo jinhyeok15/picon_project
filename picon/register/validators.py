@@ -8,3 +8,10 @@ def validate_user(value):
         return False
     else:
         return True
+
+
+def validate_follow_relation(from_, to_):
+    if from_ == to_:
+        return False
+    else:
+        return True

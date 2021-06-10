@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.http import Http404
+# from django.shortcuts import render
+# from django.http import Http404
 
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -28,6 +28,8 @@ class AccountDetail(APIView):  # 계정 정보 조회 API
     account = AccountSerializer
 
     def get(self, pk):
+        if not validate_user(pk):
+            return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
         queryset = Account.objects.get(pk=pk)
         serializer = self.account(queryset)
         data = serializer.data
@@ -48,17 +50,32 @@ class FollowInfo(APIView):
     queryset_object = Object
 
     def post(self, request):
+        from_ = request.data['from_follow']
+        to_ = request.data['to_follow']
+
+        for i in [from_, to_]:
+            if not validate_user(i):
+                return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
+        if not validate_follow_relation(from_, to_):
+            return Response(response_data(400, SAME_ID), status.HTTP_400_BAD_REQUEST)
+
         obj, created = self.queryset_object.follow_info(request, create=True)
         serializer = FollowSerializer(obj, data=request.data)
-
         if serializer.is_valid():
             serializer.save()
         if created:
             return Response(response_data(201, CREATED), status.HTTP_201_CREATED)
         else:
-            return Response(response_data(200, UPDATED), status.HTTP_200_OK)
+            return Response(response_data(201, UPDATED), status.HTTP_201_CREATED)
 
     def get(self, request):  # from_, to_ 필요 (쿼리 스트링)
+        from_ = request.GET['from_follow']
+        to_ = request.GET['to_follow']
+
+        for i in [int(from_), int(to_)]:
+            if not validate_user(i):
+                return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
+
         queryset = self.queryset_object.follow_info(request, get=True)
         serializer = FollowSerializer(queryset)
         data = serializer.data
