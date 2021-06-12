@@ -29,6 +29,17 @@ class List:
             li.append(d['id'])
         return li
 
+    @classmethod
+    def is_friend(cls, pk):
+        follow_list = cls.follow_list(pk)
+        li = []
+        for i in follow_list:
+            if pk in cls.follow_list(i):
+                li.append(True)
+            else:
+                li.append(False)
+        return li
+
 
 class Object:
 
@@ -61,6 +72,9 @@ class Data:
         for i in li:
             serializer = serializers.AccountSerializer(Account.objects.filter(id=i), many=True)
             data.append(serializer.data[0])
+        l_boolean = List.is_friend(pk)
+        for d, b in zip(data, l_boolean):
+            d['is_friend'] = b
         return data
 
     @classmethod
