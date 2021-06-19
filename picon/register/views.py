@@ -13,8 +13,10 @@ from .querysets import *
 from .validators import *
 from picon.res import response_data
 from picon.res import *
+from picon.settings import AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 
 # import re
+import boto3
 
 # Create your views here.
 
@@ -137,6 +139,9 @@ class UploadFile(APIView):
 
     def delete(self, request):
         file_id = request.data['id']
-        queryset = File.objects.get(pk=file_id)
+        file_name = Data.get_file_name(file_id)
+        queryset = self.queryset_object.get_file(file_id)
+        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        s3.Object(AWS_STORAGE_BUCKET_NAME, file_name).delete()
         queryset.delete()
         return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)
