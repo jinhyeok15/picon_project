@@ -62,6 +62,11 @@ class Object:
         except Follow.DoesNotExist:
             raise Http404
 
+    @classmethod
+    def get_file(cls, file_id):
+        obj = File.objects.get(pk=file_id)
+        return obj
+
 
 class Data:
 
@@ -87,3 +92,12 @@ class Data:
                 continue
             data.append(serializer_data[0])
         return data
+
+    @classmethod
+    def get_file_name(cls, file_id):
+        obj = Object.get_file(file_id)
+        serializer = serializers.FileSerializer(obj)
+        data = serializer.data
+        file_name = data['file']
+        file_name = file_name.split('/')[-1]
+        return file_name
