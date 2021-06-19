@@ -1,4 +1,6 @@
 from django.db import models
+from picon import settings
+import os
 
 # Create your models here.
 
@@ -25,3 +27,14 @@ class Follow(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['from_follow', 'to_follow'], name='unique_relation')
         ]
+
+
+class File(models.Model):
+    user = models.ForeignKey('Account', related_name='user_file', on_delete=models.CASCADE)
+    file = models.FileField(blank=False, null=False)
+    status = models.SmallIntegerField(default=1)
+    created = models.DateTimeField(auto_now_add=True)
+    is_profile = models.SmallIntegerField(default=0)
+
+    class Meta:
+        db_table = 'file'

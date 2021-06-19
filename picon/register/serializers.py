@@ -20,3 +20,15 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = Account
         fields = ['id']
+
+
+class FileSerializer(ModelSerializer):
+    class Meta:
+        model = File
+        fields = ['id', 'user', 'file', 'status', 'created', 'is_profile']
+
+
+class FileManageSerializer(ModelSerializer):
+    class Meta:
+        model = File
+        fields = ['id', 'status', 'is_profile']

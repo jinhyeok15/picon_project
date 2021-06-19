@@ -63,10 +63,11 @@ class FollowInfo(APIView):
         serializer = FollowSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
-        if created:
-            return Response(response_data(201, CREATED), status.HTTP_201_CREATED)
-        else:
-            return Response(response_data(201, UPDATED), status.HTTP_201_CREATED)
+            if created:
+                return Response(response_data(201, CREATED), status.HTTP_201_CREATED)
+            else:
+                return Response(response_data(201, UPDATED), status.HTTP_201_CREATED)
+        return Response(response_data(400, NOT_VALID, data=serializer.errors), status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):  # from_, to_ 필요 (쿼리 스트링)
         from_ = request.GET['from_follow']
@@ -113,3 +114,29 @@ class FollowSearch(APIView):
         search = Account.objects.filter(nick_name__iregex=regex)
         data = self.queryset_data.follow_search(pk, search)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
+
+
+class UploadFile(APIView):
+    file_serializer = FileSerializer
+    file_manage_serializer = FileManageSerializer
+    queryset_object = Object
+
+    def post(self, request, *args, **kwargs):
+        user_id = request.data['user']
+        serializer = self.file_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(response_data(201, CREATED, data=serializer.data, user_id=user_id), status.HTTP_201_CREATED)
+        return Response(response_data(400, NOT_VALID, data=serializer.errors), status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        queryset = File.objects.all()
+        serializer = self.file_serializer(queryset, many=True)
+        data = serializer.data
+        return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
+
+    def delete(self, request):
+        file_id = request.data['id']
+        queryset = File.objects.get(pk=file_id)
+        queryset.delete()
+        return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)

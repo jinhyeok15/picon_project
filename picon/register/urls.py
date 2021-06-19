@@ -11,4 +11,5 @@ urlpatterns = [
     path('follow/<int:pk>/', views.FollowList.as_view()),  # 내 follow 조회
     path('search/', views.UserSearch.as_view()),  # 전체 유저 조회
     path('follow/<int:pk>/search/', views.FollowSearch.as_view()),  # 내 follow 검색 조회
+    path('upload/', views.UploadFile.as_view(), name='file-upload'),  # 파일 업로드 API
 ]
