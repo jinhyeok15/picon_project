@@ -17,6 +17,7 @@ from picon.settings import AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRE
 
 # import re
 import boto3
+import uuid
 
 # Create your views here.
 
@@ -122,10 +123,23 @@ class UploadFile(APIView):
     file_serializer = FileSerializer
     file_manage_serializer = FileManageSerializer
     queryset_object = Object
+    s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
     def post(self, request, *args, **kwargs):
         user_id = request.data['user']
-        serializer = self.file_serializer(data=request.data)
+        request_data = request.data
+        file = request.FILES['file']
+        file_name = str(uuid.uuid1()).replace('-', '')
+        if file:
+            self.s3.upload_fileobj(file, 'com-noc-picon', file_name)
+        data = dict()
+        for key, value in request_data.items():
+            if key == 'file':
+                data['file_url'] = f'https://com-noc-picon.s3.ap-northeast-2.amazonaws.com/{file_name}'
+            else:
+                data[key] = value
+        print(data)
+        serializer = self.file_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(response_data(201, CREATED, data=serializer.data, user_id=user_id), status.HTTP_201_CREATED)
@@ -141,7 +155,6 @@ class UploadFile(APIView):
         file_id = request.data['id']
         file_name = Data.get_file_name(file_id)
         queryset = self.queryset_object.get_file(file_id)
-        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-        s3.Object(AWS_STORAGE_BUCKET_NAME, file_name).delete()
+        self.s3.delete_object(Bucket='com-noc-picon', Key=file_name)
         queryset.delete()
         return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)

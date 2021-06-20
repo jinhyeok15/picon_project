@@ -136,6 +136,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 AWS_ACCESS_KEY_ID = 'AKIA6FV4FYYVIYZAXQNG'
 AWS_SECRET_ACCESS_KEY = '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'
 AWS_REGION = 'ap-northeast-2'
+AWS_DEFAULT_ACL = 'public-read'
 
 # s3-storages
 AWS_STORAGE_BUCKET_NAME = 'com-noc-picon'

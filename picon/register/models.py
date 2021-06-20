@@ -31,7 +31,7 @@ class Follow(models.Model):
 
 class File(models.Model):
     user = models.ForeignKey('Account', related_name='user_file', on_delete=models.CASCADE)
-    file = models.FileField(blank=False, null=False)
+    file_url = models.CharField(max_length=512)
     status = models.SmallIntegerField(default=1)
     created = models.DateTimeField(auto_now_add=True)
     is_profile = models.SmallIntegerField(default=0)

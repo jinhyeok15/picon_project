@@ -39,20 +39,20 @@ class Migration(migrations.Migration):
                 'db_table': 'follow',
             },
         ),
-        migrations.CreateModel(
-            name='File',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file', models.FileField(upload_to='')),
-                ('status', models.SmallIntegerField(default=1)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('is_profile', models.SmallIntegerField(default=0)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_file', to='register.account')),
-            ],
-            options={
-                'db_table': 'file',
-            },
-        ),
+        # migrations.CreateModel(
+        #     name='File',
+        #     fields=[
+        #         ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+        #         ('file', models.FileField(upload_to='')),
+        #         ('status', models.SmallIntegerField(default=1)),
+        #         ('created', models.DateTimeField(auto_now_add=True)),
+        #         ('is_profile', models.SmallIntegerField(default=0)),
+        #         ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_file', to='register.account')),
+        #     ],
+        #     options={
+        #         'db_table': 'file',
+        #     },
+        # ),
         migrations.AddConstraint(
             model_name='follow',
             constraint=models.UniqueConstraint(fields=('from_follow', 'to_follow'), name='unique_relation'),
