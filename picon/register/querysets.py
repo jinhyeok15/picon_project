@@ -98,6 +98,14 @@ class Data:
         obj = Object.get_file(file_id)
         serializer = serializers.FileSerializer(obj)
         data = serializer.data
-        file_name = data['file']
+        file_name = data['file_url']
         file_name = file_name.split('/')[-1]
         return file_name
+
+    @classmethod
+    def get_file_url(cls, file_id):
+        obj = Object.get_file(file_id)
+        serializer = serializers.FileSerializer(obj)
+        data = serializer.data
+        file_url = data['file_url']
+        return file_url
