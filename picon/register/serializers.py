@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer
+# from rest_framework.serializers import FileField
 
 from .models import *
 from .validators import *
@@ -25,7 +26,7 @@ class UserSerializer(ModelSerializer):
 class FileSerializer(ModelSerializer):
     class Meta:
         model = File
-        fields = ['id', 'user', 'file', 'status', 'created', 'is_profile']
+        fields = ['id', 'user', 'file_url', 'status', 'created', 'is_profile']
 
 
 class FileManageSerializer(ModelSerializer):

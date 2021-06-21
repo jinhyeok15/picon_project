@@ -11,12 +11,15 @@ from .models import *
 from .serializers import *
 from .querysets import *
 from .validators import *
-from picon.res import response_data
+from picon.res import response_data, error_data
 from picon.res import *
-from picon.settings import AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+from picon.settings import AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME
+from picon import s3client
 
 # import re
 import boto3
+import uuid
+from botocore.exceptions import ClientError
 
 # Create your views here.
 
@@ -122,10 +125,24 @@ class UploadFile(APIView):
     file_serializer = FileSerializer
     file_manage_serializer = FileManageSerializer
     queryset_object = Object
+    s3 = s3client.s3
+    bucket_name = s3client.bucket_name
 
     def post(self, request, *args, **kwargs):
         user_id = request.data['user']
-        serializer = self.file_serializer(data=request.data)
+        request_data = request.data
+        file = request.FILES['file']
+        file_type = str(file).split('.')[-1]
+        file_name = str(uuid.uuid1()).replace('-', '')+'.'+file_type
+        if file:
+            self.s3.upload_fileobj(file, self.bucket_name, file_name, ExtraArgs={'ContentType': "image/jpeg", 'ACL': "public-read"})
+        data = dict()
+        for key, value in request_data.items():
+            if key == 'file':
+                data['file_url'] = f'https://com-noc-picon.s3.ap-northeast-2.amazonaws.com/{file_name}'
+            else:
+                data[key] = value
+        serializer = self.file_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(response_data(201, CREATED, data=serializer.data, user_id=user_id), status.HTTP_201_CREATED)
@@ -140,8 +157,13 @@ class UploadFile(APIView):
     def delete(self, request):
         file_id = request.data['id']
         file_name = Data.get_file_name(file_id)
+        print(file_name)
         queryset = self.queryset_object.get_file(file_id)
-        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-        s3.Object(AWS_STORAGE_BUCKET_NAME, file_name).delete()
-        queryset.delete()
-        return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)
+        try:
+            self.s3.delete_object(Bucket=self.bucket_name, Key=file_name)
+            queryset.delete()
+            return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)
+        except ClientError as e:
+            queryset.status = 0
+            queryset.save()
+            return Response(error_data(e.response, file_id=file_id, file_name=file_name), status.HTTP_403_FORBIDDEN)

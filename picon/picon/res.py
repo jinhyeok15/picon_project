@@ -10,6 +10,12 @@ def response_data(code, msg, **kwargs):
     return data
 
 
+def error_data(e_res, **kwargs):
+    for key, value in kwargs.items():
+        e_res[key] = value
+    return e_res
+
+
 # 200
 OK = '조회성공'
 
