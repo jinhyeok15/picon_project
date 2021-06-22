@@ -170,3 +170,24 @@ class UploadFile(APIView):
             queryset.status = 0
             queryset.save()
             return Response(error_data(e.response, file_id=file_id, file_name=file_name), status.HTTP_403_FORBIDDEN)
+
+
+class UserFile(APIView):
+    queryset_object = Object
+    file_serializer = FileSerializer
+    file_manage_serializer = FileManageSerializer
+
+    def get(self, request, user_id):
+        queryset = self.queryset_object.filter_file_by_user(user_id)
+        serializer = self.file_serializer(queryset, many=True)
+        data = serializer.data
+        return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
+
+    def put(self, request, user_id):
+        file_id = request.data['id']
+        queryset = self.queryset_object.get_file(file_id)
+        serializer = self.file_manage_serializer(queryset, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(response_data(201, UPDATED), status.HTTP_201_CREATED)
+        return Response(response_data(400, NOT_VALID, data=request.data), status.HTTP_400_BAD_REQUEST)

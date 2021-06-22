@@ -67,6 +67,11 @@ class Object:
         obj = File.objects.get(pk=file_id)
         return obj
 
+    @classmethod
+    def filter_file_by_user(cls, user_id):
+        obj = File.objects.filter(user=user_id, status=1, is_profile=0)
+        return obj
+
 
 class Data:
 
