@@ -159,10 +159,13 @@ class UploadFile(APIView):
         file_name = Data.get_file_name(file_id)
         print(file_name)
         queryset = self.queryset_object.get_file(file_id)
+        if queryset.status == 0:
+            queryset.delete()
+            return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)
         try:
             self.s3.delete_object(Bucket=self.bucket_name, Key=file_name)
             queryset.delete()
-            return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)
+            return Response(response_data(200, DELETED), status.HTTP_200_OK)
         except ClientError as e:
             queryset.status = 0
             queryset.save()
