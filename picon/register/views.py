@@ -17,9 +17,9 @@ from picon.settings import AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRE
 from picon import s3client
 
 # import re
-import boto3
 import uuid
 from botocore.exceptions import ClientError
+from django.utils.datastructures import MultiValueDictKeyError
 
 # Create your views here.
 
@@ -30,14 +30,12 @@ class AccountList(generics.ListCreateAPIView):  # 계정 생성 및 조회 API
 
 
 class AccountDetail(APIView):  # 계정 정보 조회 API
-    account = AccountSerializer
+    queryset_data = Data
 
-    def get(self, pk):
+    def get(self, request, pk):
         if not validate_user(pk):
             return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
-        queryset = Account.objects.get(pk=pk)
-        serializer = self.account(queryset)
-        data = serializer.data
+        data = self.queryset_data.set_profile_form(pk)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
 
@@ -131,11 +129,25 @@ class UploadFile(APIView):
     def post(self, request, *args, **kwargs):
         user_id = request.data['user']
         request_data = request.data
-        file = request.FILES['file']
+        try:
+            file = request.FILES['file']
+        except MultiValueDictKeyError as e:
+            return Response(response_data(
+                404, NOT_MATCH_WITH_DB,
+                message="django.utils.datastructures.MultiValueDictKeyError: 'file'"),
+                status.HTTP_404_NOT_FOUND
+            )
         file_type = str(file).split('.')[-1]
         file_name = str(uuid.uuid1()).replace('-', '')+'.'+file_type
         if file:
-            self.s3.upload_fileobj(file, self.bucket_name, file_name, ExtraArgs={'ContentType': "image/jpeg", 'ACL': "public-read"})
+            try:
+                self.s3.upload_fileobj(file, self.bucket_name, file_name, ExtraArgs={'ContentType': "image/jpeg", 'ACL': "public-read"})
+            except ClientError as e:
+                return Response(error_data(403, UPLOAD_ERROR, e.response), status.HTTP_403_FORBIDDEN)
+            except S3UploadFailedError as e:
+                return Response(error_data(403, UPLOAD_ERROR, e.response), status.HTTP_403_FORBIDDEN)
+            else:
+                return Response(response_data(403, UPLOAD_ERROR), status.HTTP_403_FORBIDDEN)
         data = dict()
         for key, value in request_data.items():
             if key == 'file':
@@ -144,11 +156,18 @@ class UploadFile(APIView):
                 data[key] = value
         serializer = self.file_serializer(data=data)
         if serializer.is_valid():
+            if request.data['is_profile'] == 1:  # 프로필 등록 시 기존 프로필 상태 변경
+                if Data.get_profile(user_id, is_exist=True):
+                    id_value = Data.get_profile(user_id)[0]['id']
+                    obj = Object.get_file(id_value)
+                    obj.is_profile = 0
+                    obj.status = 2  # 상태 id가 2일 경우, 과거 프로필로 저장
+                    obj.save()
             serializer.save()
             return Response(response_data(201, CREATED, data=serializer.data, user_id=user_id), status.HTTP_201_CREATED)
         return Response(response_data(400, NOT_VALID, data=serializer.errors), status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request):
+    def get(self, request):  # 삭제해야할 API
         queryset = File.objects.all()
         serializer = self.file_serializer(queryset, many=True)
         data = serializer.data
@@ -158,7 +177,10 @@ class UploadFile(APIView):
         file_id = request.data['id']
         file_name = Data.get_file_name(file_id)
         print(file_name)
-        queryset = self.queryset_object.get_file(file_id)
+        try:
+            queryset = self.queryset_object.get_file(file_id)
+        except File.DoesNotExist:
+            return Response(response_data(404, DOES_NOT_EXIST), status.HTTP_404_NOT_FOUND)
         if queryset.status == 0:
             queryset.delete()
             return Response(response_data(204, DELETED), status.HTTP_204_NO_CONTENT)
@@ -169,7 +191,8 @@ class UploadFile(APIView):
         except ClientError as e:
             queryset.status = 0
             queryset.save()
-            return Response(error_data(e.response, file_id=file_id, file_name=file_name), status.HTTP_403_FORBIDDEN)
+            return Response(error_data(403, UPLOAD_ERROR, e.response, file_id=file_id, file_name=file_name),
+                            status.HTTP_403_FORBIDDEN)
 
 
 class UserFile(APIView):
@@ -177,17 +200,45 @@ class UserFile(APIView):
     file_serializer = FileSerializer
     file_manage_serializer = FileManageSerializer
 
-    def get(self, request, user_id):
-        queryset = self.queryset_object.filter_file_by_user(user_id)
+    def get(self, request, user_id):  # 유저가 가지고 있는 모든 업로드 파일 조회
+        queryset = self.queryset_object.user_file(user_id)
         serializer = self.file_serializer(queryset, many=True)
         data = serializer.data
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
-    def put(self, request, user_id):
+    def put(self, request, user_id):  # 유저 파일 상태 변경
         file_id = request.data['id']
-        queryset = self.queryset_object.get_file(file_id)
+        if not validate_user_file(user_id, file_id):
+            return Response(response_data(400, NOT_VALID), status.HTTP_400_BAD_REQUEST)
+        try:
+            queryset = self.queryset_object.get_file(file_id)
+        except File.DoesNotExist:
+            return Response(response_data(404, DOES_NOT_EXIST), status.HTTP_404_NOT_FOUND)
         serializer = self.file_manage_serializer(queryset, data=request.data)
         if serializer.is_valid():
+            if request.data['is_profile'] == 1:  # 프로필 등록 시 기존 프로필 상태 변경
+                if Data.get_profile(user_id, is_exist=True):
+                    id_value = Data.get_profile(user_id)[0]['id']
+                    obj = Object.get_file(id_value)
+                    obj.is_profile = 0
+                    obj.status = 2  # 상태 id가 2일 경우, 과거 프로필로 저장
+                    obj.save()
             serializer.save()
             return Response(response_data(201, UPDATED), status.HTTP_201_CREATED)
         return Response(response_data(400, NOT_VALID, data=request.data), status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfile(APIView):
+    queryset_data = Data
+
+    def get(self, request, user_id):
+        data = self.queryset_data.get_profile(user_id, __all__=True)
+        return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
+
+
+class UserContents(APIView):
+    queryset_data = Data
+
+    def get(self, request, user_id):
+        data = self.queryset_data.user_contents(user_id)
+        return Response(response_data(200, OK, data=data), status.HTTP_200_OK)

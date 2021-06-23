@@ -15,3 +15,13 @@ def validate_follow_relation(from_, to_):
         return False
     else:
         return True
+
+
+def validate_user_file(user, file):
+    data = Data.user_file(user)
+    li = []
+    for d in data:
+        li.append(d['id'])
+    if file in li:
+        return True
+    return False

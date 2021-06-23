@@ -64,12 +64,31 @@ class Object:
 
     @classmethod
     def get_file(cls, file_id):
-        obj = File.objects.get(pk=file_id)
+        try:
+            obj = File.objects.get(pk=file_id)
+            return obj
+        except File.DoesNotExist:
+            return Response(response_data(404, DOES_NOT_EXIST), status.HTTP_404_NOT_FOUND)
+
+    @classmethod
+    def user_file(cls, user_id):
+        obj = File.objects.filter(user=user_id, status__in=[1, 2])
         return obj
 
     @classmethod
-    def filter_file_by_user(cls, user_id):
+    def upload_list(cls, user_id):
         obj = File.objects.filter(user=user_id, status=1, is_profile=0)
+        return obj
+
+    @classmethod
+    def profile_list(cls, user_id, __all__=False):
+        if __all__ is True:
+            obj = File.objects.filter(user=user_id, status__in=[1, 2], is_profile=1)
+        else:
+            obj = File.objects.filter(user=user_id, status=1, is_profile=1)
+        if not obj:
+            obj = dict()
+            return obj
         return obj
 
 
@@ -114,3 +133,44 @@ class Data:
         data = serializer.data
         file_url = data['file_url']
         return file_url
+
+    @classmethod
+    def get_profile(cls, user_id, is_exist=False, __all__=False):
+        queryset = Object.profile_list(user_id, __all__=__all__)
+        serializer = serializers.FileSerializer(queryset, many=True)
+        data = serializer.data
+        if is_exist is True:
+            if not data:
+                return False
+            else:
+                return True
+        return data
+
+    @classmethod
+    def user_file(cls, user_id):
+        queryset = Object.user_file(user_id)
+        serializer = serializers.FileSerializer(queryset, many=True)
+        data = serializer.data
+        return data
+
+    @classmethod
+    def user_contents(cls, user_id):
+        queryset = Object.upload_list(user_id)
+        serializer = serializers.FileSerializer(queryset, many=True)
+        data = serializer.data
+        return data
+
+    @classmethod
+    def set_profile_form(cls, user_id):
+        try:
+            queryset = Account.objects.get(pk=user_id)
+        except Account.DoesNotExist:
+            return Response(response_data(404, DOES_NOT_EXIST), status.HTTP_404_NOT_FOUND)
+        serializer = serializers.AccountSerializer(queryset)
+        data = serializer.data
+        profile_data = Data.get_profile(user_id)
+        try:
+            data['profile_url'] = profile_data[0]['file_url']
+        except IndexError:
+            data['profile_url'] = None
+        return data

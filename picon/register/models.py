@@ -32,7 +32,7 @@ class Follow(models.Model):
 class File(models.Model):
     user = models.ForeignKey('Account', related_name='user_file', on_delete=models.CASCADE)
     file_url = models.CharField(max_length=512)
-    status = models.SmallIntegerField(default=1)
+    status = models.SmallIntegerField(default=1)  # status = 0:삭제, 1:정상, 2:과거 프로필
     created = models.DateTimeField(auto_now_add=True)
     is_profile = models.SmallIntegerField(default=0)
 
