@@ -174,3 +174,12 @@ class Data:
         except IndexError:
             data['profile_url'] = None
         return data
+
+    @classmethod
+    def follow_list_with_profile(cls, user_id):
+        li_follow_id = List.follow_list(user_id)
+        data = []
+        for i in li_follow_id:
+            account_data = Data.set_profile_form(i)
+            data.append(account_data)
+        return data

@@ -92,7 +92,7 @@ class FollowList(APIView):
     def get(self, request, pk,):
         if not validate_user(pk):
             return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
-        data = self.queryset_data.follow_list(pk)
+        data = self.queryset_data.follow_list_with_profile(pk)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
 
