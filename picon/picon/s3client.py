@@ -19,7 +19,6 @@ def create_s3_bucket(bucket_):
             CreateBucketConfiguration={
                 'LocationConstraint': AWS_REGION
             },
-            GrantFullControl='1e938911d0f8659c6903b6507b26965188a3d82517399a0229fe022590d5c6db',
         )
         return response
     except ClientError as e:

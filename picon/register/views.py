@@ -121,13 +121,15 @@ class FollowSearch(APIView):
 
 class UploadFile(APIView):
     file_serializer = FileSerializer
-    file_manage_serializer = FileManageSerializer
+    # file_manage_serializer = FileManageSerializer
     queryset_object = Object
     s3 = s3client.s3
     bucket_name = s3client.bucket_name
 
     def post(self, request, *args, **kwargs):
         user_id = request.data['user']
+        if not validate_user(int(user_id)):
+            return Response(response_data(400, NOT_EXIST_USER, user_id=user_id), status.HTTP_400_BAD_REQUEST)
         request_data = request.data
         try:
             file = request.FILES['file']
@@ -141,13 +143,19 @@ class UploadFile(APIView):
         file_name = str(uuid.uuid1()).replace('-', '')+'.'+file_type
         if file:
             try:
-                self.s3.upload_fileobj(file, self.bucket_name, file_name, ExtraArgs={'ContentType': "image/jpeg", 'ACL': "public-read"})
+                if request.data['type'] == 'image':
+                    self.s3.upload_fileobj(file, self.bucket_name, file_name,
+                                           ExtraArgs={'ContentType': "image/jpeg", 'ACL': "public-read"})
+                elif request.data['type'] == 'video':
+                    self.s3.upload_fileobj(file, self.bucket_name, file_name,
+                                           ExtraArgs={'ContentType': "audio/mpeg", 'ACL': "public-read"})
+                else:
+                    return Response(response_data(400, NOT_VALID+"(type)"), status.HTTP_400_BAD_REQUEST)
             except ClientError as e:
                 return Response(error_data(403, UPLOAD_ERROR, e.response), status.HTTP_403_FORBIDDEN)
             except S3UploadFailedError as e:
                 return Response(error_data(403, UPLOAD_ERROR, e.response), status.HTTP_403_FORBIDDEN)
-            else:
-                return Response(response_data(403, UPLOAD_ERROR), status.HTTP_403_FORBIDDEN)
+
         data = dict()
         for key, value in request_data.items():
             if key == 'file':
@@ -156,9 +164,9 @@ class UploadFile(APIView):
                 data[key] = value
         serializer = self.file_serializer(data=data)
         if serializer.is_valid():
-            if request.data['is_profile'] == 1:  # 프로필 등록 시 기존 프로필 상태 변경
-                if Data.get_profile(user_id, is_exist=True):
-                    id_value = Data.get_profile(user_id)[0]['id']
+            if int(request.data['is_profile']) == 1:  # 프로필 등록 시 기존 프로필 상태 변경
+                if Data.get_profile(int(user_id), is_exist=True):
+                    id_value = Data.get_profile(int(user_id))[0]['id']
                     obj = Object.get_file(id_value)
                     obj.is_profile = 0
                     obj.status = 2  # 상태 id가 2일 경우, 과거 프로필로 저장
@@ -219,6 +227,7 @@ class UserFile(APIView):
             if request.data['is_profile'] == 1:  # 프로필 등록 시 기존 프로필 상태 변경
                 if Data.get_profile(user_id, is_exist=True):
                     id_value = Data.get_profile(user_id)[0]['id']
+                    print(id_value)
                     obj = Object.get_file(id_value)
                     obj.is_profile = 0
                     obj.status = 2  # 상태 id가 2일 경우, 과거 프로필로 저장

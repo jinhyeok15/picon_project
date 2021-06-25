@@ -26,10 +26,10 @@ class UserSerializer(ModelSerializer):
 class FileSerializer(ModelSerializer):
     class Meta:
         model = File
-        fields = ['id', 'user', 'file_url', 'status', 'created', 'is_profile']
+        fields = '__all__'
 
 
 class FileManageSerializer(ModelSerializer):
     class Meta:
         model = File
-        fields = ['id', 'status', 'is_profile']
+        fields = ['id', 'status', 'is_profile', 'comment']

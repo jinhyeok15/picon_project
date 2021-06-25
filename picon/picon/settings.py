@@ -133,8 +133,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # aws
-AWS_ACCESS_KEY_ID = 'AKIA6FV4FYYVCG6CNJ55'
-AWS_SECRET_ACCESS_KEY = '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'
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
 AWS_REGION = 'ap-northeast-2'
 AWS_DEFAULT_ACL = 'public-read'
 
