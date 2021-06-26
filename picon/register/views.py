@@ -172,7 +172,7 @@ class UploadFile(APIView):
                     obj.status = 2  # 상태 id가 2일 경우, 과거 프로필로 저장
                     obj.save()
             serializer.save()
-            return Response(response_data(201, CREATED, data=serializer.data, user_id=user_id), status.HTTP_201_CREATED)
+            return Response(response_data(201, CREATED, user_id=user_id), status.HTTP_201_CREATED)
         return Response(response_data(400, NOT_VALID, data=serializer.errors), status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):  # 삭제해야할 API
@@ -184,7 +184,7 @@ class UploadFile(APIView):
     def delete(self, request):
         file_id = request.data['id']
         file_name = Data.get_file_name(file_id)
-        print(file_name)
+        # print(file_name)
         try:
             queryset = self.queryset_object.get_file(file_id)
         except File.DoesNotExist:

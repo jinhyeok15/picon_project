@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-l#xxwp+9^dhsack9hha2ea$kvl)k!yr!v(d#u=e7*1!y8#@1k0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['3.36.87.197']
 
 
 # Application definition
@@ -133,8 +133,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # aws
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
+AWS_ACCESS_KEY_ID = 'AKIA6FV4FYYVLPAV5WYH'
+AWS_SECRET_ACCESS_KEY = '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'
 AWS_REGION = 'ap-northeast-2'
 AWS_DEFAULT_ACL = 'public-read'
 
