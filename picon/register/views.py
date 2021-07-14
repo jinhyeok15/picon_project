@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from .models import *
 from .serializers import *
-from .querysets import *
+from .querysets import QuerySet
 from .validators import *
 from picon.res import response_data, error_data
 from picon.res import *
@@ -30,12 +30,12 @@ class AccountList(generics.ListCreateAPIView):  # 계정 생성 및 조회 API
 
 
 class AccountDetail(APIView):  # 계정 정보 조회 API
-    queryset_data = Data
+    q = QuerySet
 
     def get(self, request, pk):
         if not validate_user(pk):
             return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
-        data = self.queryset_data.set_profile_form(pk)
+        data = self.q.set_profile_form(pk)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
 
@@ -50,7 +50,7 @@ class FollowLog(APIView):
 
 
 class FollowInfo(APIView):
-    queryset_object = Object
+    q = QuerySet
 
     def post(self, request):
         from_ = request.data['from_follow']
@@ -62,7 +62,7 @@ class FollowInfo(APIView):
         if not validate_follow_relation(from_, to_):
             return Response(response_data(400, SAME_ID), status.HTTP_400_BAD_REQUEST)
 
-        obj, created = self.queryset_object.follow_info(request, create=True)
+        obj, created = self.q.follow_info(request, create=True)
         serializer = FollowSerializer(obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -80,19 +80,19 @@ class FollowInfo(APIView):
             if not validate_user(i):
                 return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
 
-        queryset = self.queryset_object.follow_info(request, get=True)
+        queryset = self.q.follow_info(request, get=True)
         serializer = FollowSerializer(queryset)
         data = serializer.data
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
 
 class FollowList(APIView):
-    queryset_data = Data
+    q = QuerySet
 
     def get(self, request, pk,):
         if not validate_user(pk):
             return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
-        data = self.queryset_data.follow_list_with_profile(pk)
+        data = self.q.follow_list_with_profile(pk)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
 
@@ -109,20 +109,20 @@ class UserSearch(APIView):
 
 
 class FollowSearch(APIView):
-    queryset_data = Data
+    q = QuerySet
 
     def get(self, request, pk):
         nick_name = request.GET['nick_name']
         regex = rf'{nick_name}'
         search = Account.objects.filter(nick_name__iregex=regex)
-        data = self.queryset_data.follow_search(pk, search)
+        data = self.q.follow_search(pk, search)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
 
 class UploadFile(APIView):
     file_serializer = FileSerializer
     # file_manage_serializer = FileManageSerializer
-    queryset_object = Object
+    q = QuerySet
     s3 = s3client.s3
     bucket_name = s3client.bucket_name
 
@@ -186,7 +186,7 @@ class UploadFile(APIView):
         file_name = Data.get_file_name(file_id)
         # print(file_name)
         try:
-            queryset = self.queryset_object.get_file(file_id)
+            queryset = self.q.get_file(file_id)
         except File.DoesNotExist:
             return Response(response_data(404, DOES_NOT_EXIST), status.HTTP_404_NOT_FOUND)
         if queryset.status == 0:
@@ -204,12 +204,12 @@ class UploadFile(APIView):
 
 
 class UserFile(APIView):
-    queryset_object = Object
+    q = QuerySet
     file_serializer = FileSerializer
     file_manage_serializer = FileManageSerializer
 
     def get(self, request, user_id):  # 유저가 가지고 있는 모든 업로드 파일 조회
-        queryset = self.queryset_object.user_file(user_id)
+        queryset = self.q.user_file(user_id)
         serializer = self.file_serializer(queryset, many=True)
         data = serializer.data
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
@@ -219,7 +219,7 @@ class UserFile(APIView):
         if not validate_user_file(user_id, file_id):
             return Response(response_data(400, NOT_VALID), status.HTTP_400_BAD_REQUEST)
         try:
-            queryset = self.queryset_object.get_file(file_id)
+            queryset = self.q.get_file(file_id)
         except File.DoesNotExist:
             return Response(response_data(404, DOES_NOT_EXIST), status.HTTP_404_NOT_FOUND)
         serializer = self.file_manage_serializer(queryset, data=request.data)
@@ -238,16 +238,16 @@ class UserFile(APIView):
 
 
 class UserProfile(APIView):
-    queryset_data = Data
+    q = QuerySet
 
     def get(self, request, user_id):
-        data = self.queryset_data.get_profile(user_id, __all__=True)
+        data = self.q.get_profile(user_id, __all__=True)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
 
 
 class UserContents(APIView):
-    queryset_data = Data
+    q = QuerySet
 
     def get(self, request, user_id):
-        data = self.queryset_data.user_contents(user_id)
+        data = self.q.user_contents(user_id)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)

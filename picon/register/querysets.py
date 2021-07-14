@@ -183,3 +183,21 @@ class Data:
             account_data = Data.set_profile_form(i)
             data.append(account_data)
         return data
+
+
+class QuerySet(List, Object, Data):
+
+    info = {
+        "List": [
+            "follow_list", "user_list", "is_friend",
+        ],
+        "Object": [
+            "follow_info", "get_file", "user_file",
+            "upload_list", "profile_list",
+        ],
+        "Data": [
+            "follow_list", "follow_search",
+            "get_file_name", "get_file_url", "get_profile", "user_file", "user_contents",
+            "set_profile_form", "follow_list_with_profile",
+        ]
+    }
