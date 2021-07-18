@@ -1,5 +1,6 @@
 # from django.core.exceptions import ValidationError
 from .querysets import *
+from .models import *
 
 
 def validate_user(value):
@@ -25,3 +26,10 @@ def validate_user_file(user, file):
     if file in li:
         return True
     return False
+
+
+def is_valid_contents(pk):
+    if File.objects.filter(pk=pk, status=1, is_profile=0):
+        return True
+    return False
+

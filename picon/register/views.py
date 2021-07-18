@@ -9,11 +9,15 @@ from rest_framework.views import APIView
 
 from .models import *
 from .serializers import *
-from .querysets import QuerySet
+from . import querysets
+from . import datasets
 from .validators import *
 from picon.res import response_data, error_data
 from picon.res import *
-from picon.settings import AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME
+from picon.settings import (
+    AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME,
+    AWS_S3_CUSTOM_DOMAIN
+)
 from picon import s3client
 
 # import re
@@ -30,7 +34,7 @@ class AccountList(generics.ListCreateAPIView):  # 계정 생성 및 조회 API
 
 
 class AccountDetail(APIView):  # 계정 정보 조회 API
-    q = QuerySet
+    q = querysets.QuerySet
 
     def get(self, request, pk):
         if not validate_user(pk):
@@ -50,7 +54,7 @@ class FollowLog(APIView):
 
 
 class FollowInfo(APIView):
-    q = QuerySet
+    q = querysets.QuerySet
 
     def post(self, request):
         from_ = request.data['from_follow']
@@ -87,7 +91,7 @@ class FollowInfo(APIView):
 
 
 class FollowList(APIView):
-    q = QuerySet
+    q = querysets.QuerySet
 
     def get(self, request, pk,):
         if not validate_user(pk):
@@ -109,7 +113,7 @@ class UserSearch(APIView):
 
 
 class FollowSearch(APIView):
-    q = QuerySet
+    q = querysets.QuerySet
 
     def get(self, request, pk):
         nick_name = request.GET['nick_name']
@@ -159,7 +163,7 @@ class UploadFile(APIView):
         data = dict()
         for key, value in request_data.items():
             if key == 'file':
-                data['file_url'] = f'https://com-noc-picon.s3.ap-northeast-2.amazonaws.com/{file_name}'
+                data['file_url'] = f'https://{AWS_S3_CUSTOM_DOMAIN}/{file_name}'
             else:
                 data[key] = value
         serializer = self.file_serializer(data=data)
@@ -204,7 +208,7 @@ class UploadFile(APIView):
 
 
 class UserFile(APIView):
-    q = QuerySet
+    q = querysets.QuerySet
     file_serializer = FileSerializer
     file_manage_serializer = FileManageSerializer
 
@@ -238,7 +242,7 @@ class UserFile(APIView):
 
 
 class UserProfile(APIView):
-    q = QuerySet
+    q = querysets.QuerySet
 
     def get(self, request, user_id):
         data = self.q.get_profile(user_id, __all__=True)
@@ -246,8 +250,18 @@ class UserProfile(APIView):
 
 
 class UserContents(APIView):
-    q = QuerySet
+    q = querysets.QuerySet
 
     def get(self, request, user_id):
         data = self.q.user_contents(user_id)
+        return Response(response_data(200, OK, data=data), status.HTTP_200_OK)
+
+
+class HomeContents(APIView):
+    d = datasets.Data()
+
+    def get(self, request, user_id):
+        if not validate_user(user_id):
+            return Response(response_data(400, NOT_EXIST_USER), status.HTTP_400_BAD_REQUEST)
+        data = self.d.home_contents(user_id)
         return Response(response_data(200, OK, data=data), status.HTTP_200_OK)

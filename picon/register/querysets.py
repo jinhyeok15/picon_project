@@ -5,6 +5,7 @@ from . import serializers
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
+from picon.res import DOES_NOT_EXIST
 
 
 class List:
@@ -179,8 +180,9 @@ class Data:
     def follow_list_with_profile(cls, user_id):
         li_follow_id = List.follow_list(user_id)
         data = []
-        for i in li_follow_id:
+        for i, j in zip(li_follow_id, List.is_friend(user_id)):
             account_data = Data.set_profile_form(i)
+            account_data['is_friend'] = j
             data.append(account_data)
         return data
 

@@ -16,6 +16,28 @@ class Account(models.Model):
         ordering = ['created']
 
 
+def user_follow(pk):
+    obj = Follow.objects.filter(from_follow=pk).values('to_follow')
+    try:
+        user_follow_list = []
+        for i in obj:
+            user_follow_list.append(i['to_follow'])
+        return user_follow_list
+    except IndexError:
+        return []
+
+
+def user_file(pk):
+    obj = File.objects.filter(user=pk).values('id')
+    try:
+        user_file_list = []
+        for i in obj:
+            user_file_list.append(i['id'])
+        return user_file_list
+    except IndexError:
+        return []
+
+
 class Follow(models.Model):
     from_follow = models.ForeignKey('Account', related_name='user_id', on_delete=models.CASCADE)
     to_follow = models.ForeignKey('Account', related_name='follow_id', on_delete=models.CASCADE)
@@ -40,3 +62,22 @@ class File(models.Model):
 
     class Meta:
         db_table = 'file'
+
+
+class FeedBack(models.Model):
+    from_feed_back = models.ForeignKey('Account', related_name='from_feed_back', on_delete=models.CASCADE)
+    to_feed_back = models.ForeignKey('File', related_name='to_feed_back', on_delete=models.CASCADE)
+    # 피드백 이모티콘 종류 (heart, like, bad, sad, happy)
+    type = models.CharField(max_length=10, default='heart')
+    status = models.SmallIntegerField(default=1)
+    modified = models.DateTimeField(auto_now=True)
+
+
+class Pick(models.Model):
+    from_pick = models.ForeignKey('Account', related_name='from_pick', on_delete=models.CASCADE)
+    to_pick = models.ForeignKey('File', related_name='to_pick', on_delete=models.CASCADE)
+    status = models.SmallIntegerField(default=1)  # 1 정상, 0 삭제
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'pick'

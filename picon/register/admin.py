@@ -5,3 +5,5 @@ from .models import *
 admin.site.register(Account)
 admin.site.register(Follow)
 admin.site.register(File)
+admin.site.register(FeedBack)
+admin.site.register(Pick)
