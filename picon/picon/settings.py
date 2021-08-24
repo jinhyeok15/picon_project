@@ -139,7 +139,7 @@ AWS_REGION = 'ap-northeast-2'
 AWS_DEFAULT_ACL = 'public-read'
 
 # s3-storages
-AWS_STORAGE_BUCKET_NAME = 'com-noc-picon'
+AWS_STORAGE_BUCKET_NAME = 'BUCKET_NAME'
 AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,AWS_REGION)
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
