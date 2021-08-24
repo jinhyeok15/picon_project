@@ -15,7 +15,7 @@ s3 = boto3.client(
 def create_s3_bucket(bucket_):
     try:
         response = s3.create_bucket(
-            Bucket='com-noc-picon',
+            Bucket='bucket_name',
             CreateBucketConfiguration={
                 'LocationConstraint': AWS_REGION
             },
